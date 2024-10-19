@@ -399,7 +399,7 @@ class BookSerializer(serializers.ModelSerializer):
 
 class BookView(APIView):
     # 认证设置
-    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    # authentication_classes = (TokenAuthentication, SessionAuthentication)
     # 权限设置
     permission_classes = (IsAuthenticated,)
 
