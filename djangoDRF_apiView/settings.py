@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -73,6 +74,20 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'djangoDRF_apiView.wsgi.application'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+SIMPLE_JWT = {
+    # 访问令牌，一般比较短，失效后要用刷新令牌换取访问令牌
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),  #访问令牌设置5分钟
+    # 刷新令牌，一般稍微长点，失效后需要重新登录
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=2),    #刷新令牌设置2天
+    # 其他配置
+}
 
 
 # Database

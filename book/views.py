@@ -3,6 +3,8 @@ import json
 from django.core.serializers import serialize
 from django.http import HttpResponse
 from django.shortcuts import render
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
 
@@ -41,6 +43,7 @@ from book.models import Book, Publisher, Author
 #
 #     # 查所有
 #     def get(self, request):
+#         print(request.user)
 #         print(request.query_params)
 #         books = Book.objects.all()
 #         # 序列化多个对象
@@ -340,12 +343,12 @@ from book.models import Book, Publisher, Author
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.mixins import ListModelMixin, CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin
 
-class BookSerializer(serializers.ModelSerializer):
-    date = serializers.DateTimeField(source='pub_date')
-    class Meta:
-        model = Book
-        # fields = '__all__'
-        exclude = ['pub_date']
+# class BookSerializer(serializers.ModelSerializer):
+#     date = serializers.DateTimeField(source='pub_date')
+#     class Meta:
+#         model = Book
+#         # fields = '__all__'
+#         exclude = ['pub_date']
 
 # class BookView(GenericViewSet,
 #                ListModelMixin,      # 查询所有get
@@ -358,25 +361,63 @@ class BookSerializer(serializers.ModelSerializer):
 #     serializer_class = BookSerializer
 
 # 合并继承类
-class BookView(ModelViewSet):
-    queryset = Book.objects.all()
-    serializer_class = BookSerializer
-
-class PublisherSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Publisher
-        fields = '__all__'
-
-class PublisherViewSet(ModelViewSet):
-    queryset = Publisher.objects.all()
-    serializer_class = PublisherSerializer
-
-class AuthorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Author
-        fields = '__all__'
-
-class AuthorViewSet(ModelViewSet):
-    queryset = Author.objects.all()
-    serializer_class = AuthorSerializer
+# class BookView(ModelViewSet):
+#     queryset = Book.objects.all()
+#     serializer_class = BookSerializer
+#
+# class PublisherSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Publisher
+#         fields = '__all__'
+#
+# class PublisherViewSet(ModelViewSet):
+#     queryset = Publisher.objects.all()
+#     serializer_class = PublisherSerializer
+#
+# class AuthorSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Author
+#         fields = '__all__'
+#
+# class AuthorViewSet(ModelViewSet):
+#     queryset = Author.objects.all()
+#     serializer_class = AuthorSerializer
 # --------------------------------------------------------------基于ModelViewSet接口实现----------------------------------6
+
+
+
+
+
+
+# 升级序列化器，自动实现上面基础版本，强耦合了，自动创建
+class BookSerializer(serializers.ModelSerializer):
+    date = serializers.DateTimeField(source='pub_date')
+    class Meta:
+        model = Book
+        # fields = '__all__'
+        exclude = ['pub_date']
+
+class BookView(APIView):
+    # 认证设置
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    # 权限设置
+    permission_classes = (IsAuthenticated,)
+
+    # 查所有
+    def get(self, request):
+        print(request.user)
+        print(request.query_params)
+        books = Book.objects.all()
+        # 序列化多个对象
+        serializer = BookSerializer(instance=books, many=True)
+        return Response(serializer.data)
+
+    # 增加
+    def post(self, request):
+        # 反序列化
+        serializer = BookSerializer(data=request.data)
+        if serializer.is_valid():
+            result = serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
